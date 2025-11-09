@@ -125,10 +125,3 @@ python3 capacity_checker.py --help
 ```bash
 aws sts get-caller-identity
 ```
-
-## Support
-
-For AWS quota increases:
-- Use AWS Service Quotas console
-- Submit support cases for large increases
-- Allow 24-48 hours for processing
