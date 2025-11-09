@@ -1,6 +1,6 @@
 # AWS Capacity Checker
 
-Python script to check AWS capacity reservations, service quotas, and limits across all regions for bulk instance deployment events.
+Python script to check AWS capacity reservations, service quotas, and limits across all regions for events.
 
 ## Prerequisites
 
