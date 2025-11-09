@@ -126,7 +126,7 @@ python3 capacity_checker.py --help
 aws sts get-caller-identity
 ```
 
-
+Sample Output
 ```
 command : python service_quota_check.py --region us-east-1
 output:
