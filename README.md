@@ -74,23 +74,23 @@ Your AWS user/role needs these permissions:
 
 ### Check All Regions
 ```bash
-python3 capacity_checker.py
+python3 service_quota_check.py
 ```
 
 ### Check Specific Region
 ```bash
-python3 capacity_checker.py --region us-west-2
+python3 service_quota_check.py --region us-west-2
 ```
 
 ### Check Specific Instance Type
 ```bash
-python3 capacity_checker.py --instance-type p4d.24xlarge
-python3 capacity_checker.py --instance-type g5.xlarge --region us-east-1
+python3 service_quota_check.py --instance-type p4d.24xlarge
+python3 service_quota_check.py --instance-type g5.xlarge --region us-east-1
 ```
 
 ### Help
 ```bash
-python3 capacity_checker.py --help
+python3 service_quota_check.py --help
 ```
 
 ## What It Checks
