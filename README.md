@@ -133,75 +133,28 @@ output:
 
 Checking region: us-east-1
 
-=== AWS Service Limits Report for g5.2xlarge ===
+=== CAPACITY RESERVATIONS ===
+  ID: cr-05ca83942f0017576 | Type: m7a.large | Total: 1 | Available: 1 | State: active
+  ID: cr-0bb944b22a8e17a85 | Type: g5.2xlarge | Total: 1 | Available: 1 | State: active
+
+
+CSV report saved as: service_quota_check_20251110_180231.csv
+(.venv) stharolz@80a99709c589 /tmp % python service_quota_check.py --region us-east-1
+Checking region: us-east-1
+
+=== AWS Service Limits Report ===
 Region: us-east-1
-Generated: 2025-11-09 10:46:44
+Generated: 2025-11-10 18:02:52
 
 1. CAPACITY RESERVATIONS:
-  ID: cr-0e264a51e2c21db33 | Type: g5.xlarge | Total: 1 | Available: 1 | State: active
-
-2. COMPUTE & CAPACITY:
-  Running On-Demand G and VT instances: 64.0 None
-  All Standard (A, C, D, H, I, M, R, T, Z) Spot Inst...: 640.0 None
-  Dedicated Hosts: Unable to fetch 
+  ID: cr-05ca83942f0017576 | Type: m7a.large | Total: 1 | Available: 1 | State: active
+  ID: cr-0bb944b22a8e17a85 | Type: g5.2xlarge | Total: 1 | Available: 1 | State: active
 
 3. GPU INSTANCE QUOTAS:
   Running On-Demand G and VT instances: 64.0 None
-  Running On-Demand G and VT instances: 64.0 None
-  Running On-Demand G and VT instances: 64.0 None
-  Running On-Demand G and VT instances: 64.0 None
   Running On-Demand P instances: 384.0 None
-  Running On-Demand P instances: 384.0 None
-  Running On-Demand P instances: 384.0 None
-  Running On-Demand P instances: 384.0 None
-  Running On-Demand P instances: 384.0 None
-  Running On-Demand G and VT instances: 64.0 None
-  Running On-Demand G and VT instances: 64.0 None
+  Running On-Demand Inf instances: 64.0 None
   Running On-Demand Trn instances: 256.0 None
-  Running On-Demand Trn instances: 256.0 None
-  Running On-Demand DL instances: 96.0 None
-
-4. STORAGE LIMITS:
-  Snapshots per Region: 100000.0 None
-  IOPS for Provisioned IOPS SSD (io1) volumes: 300000.0 None
-  Snapshots per Region: 100000.0 None
-
-5. NETWORKING LIMITS:
-  VPCs per Region: 5.0 None
-  VPC security groups per Region: 2500.0 None
-  EC2-VPC Elastic IPs: 5.0 None
-  NAT gateways per Availability Zone: 5.0 None
-  Network interfaces per Region: 5000.0 None
-
-6. LOAD BALANCER LIMITS:
-  Unknown: Unable to fetch 
-  Network Load Balancers per Region: 50.0 None
-  Targets per Application Load Balancer: 1000.0 None
-
-7. DNS & TRAFFIC LIMITS:
-  Unknown: Unable to fetch 
-  Unknown: Unable to fetch 
-
-8. MONITORING LIMITS:
-  Rate of GetMetricData requests: 500.0 None
-  Unknown: Unable to fetch 
-  Unknown: Unable to fetch 
-
-9. DATABASE LIMITS:
-  DB instances: 40.0 None
-  Read replicas per primary: 15.0 None
-  Unknown: Unable to fetch 
-  Unknown: Unable to fetch 
-
-10. CONTAINER LIMITS:
-  Unknown: Unable to fetch 
-  Unknown: Unable to fetch 
-  Unknown: Unable to fetch 
-
-11. SECURITY LIMITS:
-  Roles per account: 1000.0 None
-  Unknown: Unable to fetch 
-  Unknown: Unable to fetch 
 
 === CRITICAL PRE-EVENT ACTIONS ===
 1. Request quota increases 2-3 weeks in advance
@@ -222,6 +175,9 @@ Generated: 2025-11-09 10:46:44
 === IMPORTANT NOTE ===
 Review all quotas above and submit quota increase requests if necessary
 to address your upcoming event. Allow 24-48 hours for quota increases.
+Use AWS Service Quotas console or AWS CLI to request increases.
+
+CSV report saved as: service_quota_check_20251110_180252.csv
 Use AWS Service Quotas console or AWS CLI to request increases.
 
 CSV report saved as: service_quota_check_20251109_104644.csv
