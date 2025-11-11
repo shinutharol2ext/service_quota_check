@@ -10,9 +10,7 @@ class CapacityChecker:
         self.region = region
         self.ec2 = boto3.client('ec2', region_name=region)
         self.service_quotas = boto3.client('service-quotas', region_name=region)
-        self.elbv2 = boto3.client('elbv2', region_name=region)
-        self.rds = boto3.client('rds', region_name=region)
-        self.ecs = boto3.client('ecs', region_name=region)
+
         self.csv_data = []
     
     def get_active_regions(self):
@@ -24,6 +22,7 @@ class CapacityChecker:
             return ['us-east-1']
     
     def get_quota(self, service_code, quota_code, default_name="Unknown"):
+        import time
         try:
             response = self.service_quotas.get_service_quota(
                 ServiceCode=service_code,
@@ -44,14 +43,22 @@ class CapacityChecker:
                 'Unit': quota_info['unit']
             })
             return quota_info
-        except:
-            quota_info = {'name': default_name, 'value': 'Unable to fetch', 'unit': ''}
+        except Exception as e:
+            if 'TooManyRequestsException' in str(e):
+                print(f"Rate limited, waiting 2 seconds...")
+                time.sleep(2)
+                return self.get_quota(service_code, quota_code, default_name)
+            elif 'NoSuchResourceException' in str(e):
+                print(f"Quota {quota_code} not available for {service_code} in {self.region}")
+            else:
+                print(f"Warning: Could not fetch quota {quota_code} for {service_code}: {str(e)}")
+            quota_info = {'name': default_name, 'value': 'Not available', 'unit': ''}
             self.csv_data.append({
                 'Region': self.region,
                 'Service': service_code,
                 'Quota_Name': default_name,
                 'Quota_Code': quota_code,
-                'Current_Limit': 'Unable to fetch',
+                'Current_Limit': 'Not available',
                 'Unit': ''
             })
             return quota_info
@@ -96,91 +103,19 @@ class CapacityChecker:
         quotas = {}
         quotas['ec2_instances'] = self.get_quota('ec2', quota_codes.get(family, 'L-34B43A08'))
         quotas['spot_instances'] = self.get_quota('ec2', 'L-34B43A08', 'Spot Instance Requests')
-        quotas['dedicated_hosts'] = self.get_quota('ec2', 'L-8B99F1B1', 'Dedicated Hosts')
         
         return quotas
     
     def get_gpu_quotas(self):
         gpu_quotas = {}
         
-        gpu_quotas['g4dn_instances'] = self.get_quota('ec2', 'L-DB2E81BA', 'G4DN GPU Instances')
-        gpu_quotas['g4ad_instances'] = self.get_quota('ec2', 'L-DB2E81BA', 'G4AD GPU Instances')
-        gpu_quotas['g5_instances'] = self.get_quota('ec2', 'L-DB2E81BA', 'G5 GPU Instances')
-        gpu_quotas['g5g_instances'] = self.get_quota('ec2', 'L-DB2E81BA', 'G5G GPU Instances')
-        
-        gpu_quotas['p3_instances'] = self.get_quota('ec2', 'L-417A185B', 'P3 GPU Instances')
-        gpu_quotas['p3dn_instances'] = self.get_quota('ec2', 'L-417A185B', 'P3DN GPU Instances')
-        gpu_quotas['p4d_instances'] = self.get_quota('ec2', 'L-417A185B', 'P4D GPU Instances')
-        gpu_quotas['p4de_instances'] = self.get_quota('ec2', 'L-417A185B', 'P4DE GPU Instances')
-        gpu_quotas['p5_instances'] = self.get_quota('ec2', 'L-417A185B', 'P5 GPU Instances')
-        
-        gpu_quotas['inf1_instances'] = self.get_quota('ec2', 'L-DB2E81BA', 'INF1 Inference Instances')
-        gpu_quotas['inf2_instances'] = self.get_quota('ec2', 'L-DB2E81BA', 'INF2 Inference Instances')
-        
-        gpu_quotas['trn1_instances'] = self.get_quota('ec2', 'L-2C3B7624', 'TRN1 Training Instances')
-        gpu_quotas['trn1n_instances'] = self.get_quota('ec2', 'L-2C3B7624', 'TRN1N Training Instances')
-        
-        gpu_quotas['dl1_instances'] = self.get_quota('ec2', 'L-6E869C2A', 'DL1 Deep Learning Instances')
+        gpu_quotas['g4dn_instances'] = self.get_quota('ec2', 'L-DB2E81BA', 'G and VT Spot Instance Requests')
+        gpu_quotas['p3_instances'] = self.get_quota('ec2', 'L-417A185B', 'P Spot Instance Requests')
+        gpu_quotas['inf1_instances'] = self.get_quota('ec2', 'L-1945791B', 'Inf Spot Instance Requests')
+        gpu_quotas['trn1_instances'] = self.get_quota('ec2', 'L-2C3B7624', 'Trn Spot Instance Requests')
         
         return gpu_quotas
     
-    def get_storage_quotas(self):
-        quotas = {}
-        quotas['ebs_gp3_storage'] = self.get_quota('ebs', 'L-309BACF6')
-        quotas['ebs_io2_iops'] = self.get_quota('ebs', 'L-B3A130E6')
-        quotas['ebs_snapshots'] = self.get_quota('ebs', 'L-309BACF6')
-        return quotas
-    
-    def get_networking_quotas(self):
-        quotas = {}
-        quotas['vpcs_per_region'] = self.get_quota('vpc', 'L-F678F1CE')
-        quotas['security_groups_per_vpc'] = self.get_quota('vpc', 'L-E79EC296')
-        quotas['elastic_ips'] = self.get_quota('ec2', 'L-0263D0A3')
-        quotas['nat_gateways'] = self.get_quota('vpc', 'L-FE5A380F')
-        quotas['network_interfaces'] = self.get_quota('vpc', 'L-DF5E4CA3')
-        return quotas
-    
-    def get_load_balancer_quotas(self):
-        quotas = {}
-        quotas['application_load_balancers'] = self.get_quota('elasticloadbalancing', 'L-53EA0D6D')
-        quotas['network_load_balancers'] = self.get_quota('elasticloadbalancing', 'L-69A177A2')
-        quotas['targets_per_alb'] = self.get_quota('elasticloadbalancing', 'L-7E6692B2')
-        return quotas
-    
-    def get_dns_quotas(self):
-        quotas = {}
-        quotas['route53_queries_per_second'] = self.get_quota('route53', 'L-4A133E0D')
-        quotas['cloudfront_distributions'] = self.get_quota('cloudfront', 'L-31E22F8E')
-        return quotas
-    
-    def get_monitoring_quotas(self):
-        quotas = {}
-        quotas['cloudwatch_api_requests'] = self.get_quota('monitoring', 'L-5E141212')
-        quotas['cloudwatch_custom_metrics'] = self.get_quota('monitoring', 'L-0E3CBAB9')
-        quotas['logs_ingestion_rate'] = self.get_quota('logs', 'L-F7E2A8D9')
-        return quotas
-    
-    def get_database_quotas(self):
-        quotas = {}
-        quotas['rds_instances'] = self.get_quota('rds', 'L-7B6409FD')
-        quotas['rds_read_replicas'] = self.get_quota('rds', 'L-5BC124EF')
-        quotas['dynamodb_read_capacity'] = self.get_quota('dynamodb', 'L-1B52F3F2')
-        quotas['elasticache_nodes'] = self.get_quota('elasticache', 'L-BCE3B5A8')
-        return quotas
-    
-    def get_container_quotas(self):
-        quotas = {}
-        quotas['ecs_clusters'] = self.get_quota('ecs', 'L-21C621EB')
-        quotas['ecs_services_per_cluster'] = self.get_quota('ecs', 'L-9EF96962')
-        quotas['fargate_tasks'] = self.get_quota('fargate', 'L-34B43A08')
-        return quotas
-    
-    def get_security_quotas(self):
-        quotas = {}
-        quotas['iam_roles'] = self.get_quota('iam', 'L-FE177D64')
-        quotas['kms_requests_per_second'] = self.get_quota('kms', 'L-0D7F1F96')
-        quotas['secrets_manager_secrets'] = self.get_quota('secretsmanager', 'L-69F38875')
-        return quotas
     
     def print_quota_section(self, title, quotas):
         print(f"{title}:")
@@ -189,8 +124,8 @@ class CapacityChecker:
             print(f"  {name}: {quota['value']} {quota['unit']}")
         print()
     
-    def generate_report(self, instance_type='g5.2xlarge'):
-        print(f"=== AWS Service Limits Report for {instance_type} ===")
+    def generate_report(self, instance_type=None):
+        print(f"=== AWS Service Limits Report ===")
         print(f"Region: {self.region}")
         print(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         print()
@@ -204,16 +139,10 @@ class CapacityChecker:
             print("  No capacity reservations found")
         print()
         
-        self.print_quota_section("2. COMPUTE & CAPACITY", self.get_compute_quotas(instance_type))
+        if instance_type:
+            self.print_quota_section("2. COMPUTE & CAPACITY", self.get_compute_quotas(instance_type))
         self.print_quota_section("3. GPU INSTANCE QUOTAS", self.get_gpu_quotas())
-        self.print_quota_section("4. STORAGE LIMITS", self.get_storage_quotas())
-        self.print_quota_section("5. NETWORKING LIMITS", self.get_networking_quotas())
-        self.print_quota_section("6. LOAD BALANCER LIMITS", self.get_load_balancer_quotas())
-        self.print_quota_section("7. DNS & TRAFFIC LIMITS", self.get_dns_quotas())
-        self.print_quota_section("8. MONITORING LIMITS", self.get_monitoring_quotas())
-        self.print_quota_section("9. DATABASE LIMITS", self.get_database_quotas())
-        self.print_quota_section("10. CONTAINER LIMITS", self.get_container_quotas())
-        self.print_quota_section("11. SECURITY LIMITS", self.get_security_quotas())
+    
         
         print("=== CRITICAL PRE-EVENT ACTIONS ===")
         print("1. Request quota increases 2-3 weeks in advance")
@@ -252,12 +181,27 @@ def write_csv_report(all_csv_data, timestamp):
     print(f"\nCSV report saved as: {filename}")
     return filename
 
+def validate_region(region):
+    try:
+        ec2 = boto3.client('ec2', region_name='us-east-1')
+        response = ec2.describe_regions()
+        valid_regions = [r['RegionName'] for r in response['Regions']]
+        return region in valid_regions
+    except:
+        return False
+
 def main():
     parser = argparse.ArgumentParser(description='Check AWS capacity reservations and service quotas')
     parser.add_argument('--region', '-r', help='Specific region to check (default: all regions)')
-    parser.add_argument('--instance-type', '-i', default='g5.2xlarge', help='Instance type to check (default: g5.2xlarge)')
+    parser.add_argument('--instance-type', '-i', help='Instance type to check')
+    parser.add_argument('--service', '-s', help='Specific service to check quotas for (e.g., ec2, rds, s3)')
     
     args = parser.parse_args()
+    
+    # Validate region if provided
+    if args.region and not validate_region(args.region):
+        print(f"Error: Invalid region '{args.region}'. Please use a valid AWS region.")
+        return
     
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     all_csv_data = []
